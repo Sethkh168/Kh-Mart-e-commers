@@ -51,6 +51,19 @@ export interface Order {
   createdAt: Date;
 }
 
+export interface Promotion {
+  id: string;
+  title: string;
+  description: string;
+  discount: number;
+  startDate: Date;
+  endDate: Date;
+  isActive: boolean;
+  productIds?: string[];
+  categoryIds?: string[];
+  type: 'percentage' | 'fixed' | 'bogo';
+}
+
 export interface Category {
   id: string;
   name: string;

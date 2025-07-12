@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Product, CartItem, User, Order } from '../types';
+import { Product, CartItem, User, Order, Promotion } from '../types';
 
 interface StoreState {
   // Products
@@ -10,12 +10,18 @@ interface StoreState {
   // Cart
   cart: CartItem[];
   
+  // Wishlist
+  wishlist: Product[];
+  
   // User
   user: User | null;
   isAuthenticated: boolean;
   
   // Orders
   orders: Order[];
+  
+  // Promotions
+  promotions: Promotion[];
   
   // UI State
   searchQuery: string;
@@ -31,6 +37,10 @@ interface StoreState {
   updateCartQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   
+  addToWishlist: (product: Product) => void;
+  removeFromWishlist: (productId: string) => void;
+  isInWishlist: (productId: string) => boolean;
+  
   login: (user: User) => void;
   logout: () => void;
   
@@ -38,6 +48,10 @@ interface StoreState {
   setSelectedCategory: (category: string) => void;
   
   addOrder: (order: Order) => void;
+  
+  addPromotion: (promotion: Promotion) => void;
+  updatePromotion: (id: string, updates: Partial<Promotion>) => void;
+  deletePromotion: (id: string) => void;
 }
 
 // Mock initial products
@@ -134,9 +148,11 @@ export const useStore = create<StoreState>()(
       products: initialProducts,
       categories: ['Smartphones', 'Laptops', 'Audio', 'Tablets', 'Gaming', 'Accessories'],
       cart: [],
+      wishlist: [],
       user: null,
       isAuthenticated: false,
       orders: [],
+      promotions: [],
       searchQuery: '',
       selectedCategory: '',
 
@@ -190,9 +206,29 @@ export const useStore = create<StoreState>()(
 
       clearCart: () => set({ cart: [] }),
 
+      // Wishlist actions
+      addToWishlist: (product) =>
+        set((state) => {
+          const isAlreadyInWishlist = state.wishlist.some((item) => item.id === product.id);
+          if (isAlreadyInWishlist) return state;
+          return {
+            wishlist: [...state.wishlist, product]
+          };
+        }),
+
+      removeFromWishlist: (productId) =>
+        set((state) => ({
+          wishlist: state.wishlist.filter((item) => item.id !== productId)
+        })),
+
+      isInWishlist: (productId) => {
+        const state = get();
+        return state.wishlist.some((item) => item.id === productId);
+      },
+
       // User actions
       login: (user) => set({ user, isAuthenticated: true }),
-      logout: () => set({ user: null, isAuthenticated: false, cart: [] }),
+      logout: () => set({ user: null, isAuthenticated: false, cart: [], wishlist: [] }),
 
       // Search and filter
       setSearchQuery: (query) => set({ searchQuery: query }),
@@ -202,6 +238,24 @@ export const useStore = create<StoreState>()(
       addOrder: (order) =>
         set((state) => ({
           orders: [...state.orders, order]
+        })),
+
+      // Promotions
+      addPromotion: (promotion) =>
+        set((state) => ({
+          promotions: [...state.promotions, { ...promotion, id: Date.now().toString() }]
+        })),
+
+      updatePromotion: (id, updates) =>
+        set((state) => ({
+          promotions: state.promotions.map((p) =>
+            p.id === id ? { ...p, ...updates } : p
+          )
+        })),
+
+      deletePromotion: (id) =>
+        set((state) => ({
+          promotions: state.promotions.filter((p) => p.id !== id)
         }))
     }),
     {

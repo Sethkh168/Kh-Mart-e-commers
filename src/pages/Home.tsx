@@ -1,16 +1,18 @@
 import React from 'react';
-import HeroBanner from '../components/HeroBanner';
+import HeroSlideshow from '../components/HeroSlideshow';
 import PopularCategories from '../components/PopularCategories';
 import BestOffers from '../components/BestOffers';
 import NewGoods from '../components/NewGoods';
+import BrandSlideshow from '../components/BrandSlideshow';
 
 const Home = () => {
   return (
     <div>
-      <HeroBanner />
+      <HeroSlideshow />
       <PopularCategories />
       <BestOffers />
       <NewGoods />
+      <BrandSlideshow />
     </div>
   );
 };

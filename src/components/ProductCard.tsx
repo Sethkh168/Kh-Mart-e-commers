@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, ShoppingCart, Package, Heart, Eye } from 'lucide-react';
+import { Star, ShoppingCart, Package, Heart, Eye, HeartOff } from 'lucide-react';
 import { Product } from '../types';
 import { useStore } from '../store/useStore';
 import { useNavigate } from 'react-router-dom';
@@ -11,8 +11,10 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) => {
-  const { addToCart } = useStore();
+  const { addToCart, addToWishlist, removeFromWishlist, isInWishlist } = useStore();
   const navigate = useNavigate();
+  
+  const inWishlist = isInWishlist(product.id);
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
@@ -47,6 +49,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
     navigate(`/product/${product.id}`);
   };
 
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (inWishlist) {
+      removeFromWishlist(product.id);
+      toast.success(`${product.name} removed from wishlist`);
+    } else {
+      addToWishlist(product);
+      toast.success(`${product.name} added to wishlist`);
+    }
+  };
+
   return (
     <div
       className={`bg-white rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden group cursor-pointer ${className}`}
@@ -62,8 +75,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, className = '' }) =>
 
         {/* Quick Actions */}
         <div className="absolute top-2 right-2 z-10 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors">
-            <Heart size={16} className="text-gray-600" />
+          <button 
+            onClick={handleWishlistToggle}
+            className={`p-2 rounded-full shadow-md transition-colors ${
+              inWishlist 
+                ? 'bg-red-500 text-white hover:bg-red-600' 
+                : 'bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {inWishlist ? <Heart size={16} className="fill-current" /> : <Heart size={16} />}
           </button>
           <button 
             className="bg-white p-2 rounded-full shadow-md hover:bg-gray-50 transition-colors"

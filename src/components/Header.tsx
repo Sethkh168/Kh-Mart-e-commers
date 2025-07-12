@@ -1,11 +1,11 @@
 import React from 'react';
-import { Search, ShoppingCart, Heart, User, Phone, Globe, ChevronDown, Menu, LogOut } from 'lucide-react';
+import { Search, ShoppingCart, Heart, User, Phone, Globe, ChevronDown, Menu, LogOut, Package, UserCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 
 const Header = () => {
   const navigate = useNavigate();
-  const { cart, user, isAuthenticated, logout, searchQuery, setSearchQuery } = useStore();
+  const { cart, user, isAuthenticated, logout, searchQuery, setSearchQuery, wishlist, categories } = useStore();
   
   const cartTotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
@@ -116,19 +116,89 @@ const Header = () => {
 
           {/* Header Actions */}
           <div className="flex items-center space-x-4">
-            <button className="flex items-center space-x-1 hover:text-blue-600 transition-colors">
-              <Heart size={20} />
-              <span className="hidden sm:inline">Wishlist</span>
-            </button>
             <button 
-              onClick={handleAuthAction}
-              className="flex items-center space-x-1 hover:text-blue-600 transition-colors"
+              onClick={() => navigate('/wishlist')}
+              className="flex items-center space-x-1 hover:text-blue-600 transition-colors relative"
             >
-              <User size={20} />
-              <span className="hidden sm:inline">
-                {isAuthenticated ? (user?.role === 'admin' ? 'Admin' : 'Profile') : 'Account'}
-              </span>
+              <Heart size={20} />
+              <span className="hidden sm:inline">Wishlist ({wishlist.length})</span>
+              {wishlist.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                  {wishlist.length}
+                </span>
+              )}
             </button>
+            
+            {/* Account Dropdown */}
+            <div className="relative group">
+              <button className="flex items-center space-x-1 hover:text-blue-600 transition-colors">
+                <User size={20} />
+                <span className="hidden sm:inline">
+                  {isAuthenticated ? (user?.role === 'admin' ? 'Admin' : 'Account') : 'Account'}
+                </span>
+                <ChevronDown size={16} />
+              </button>
+              
+              {/* Dropdown Menu */}
+              <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                {isAuthenticated ? (
+                  <div className="py-2">
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <p className="font-medium text-gray-900">{user?.name}</p>
+                      <p className="text-sm text-gray-500">{user?.email}</p>
+                    </div>
+                    <button
+                      onClick={() => navigate('/profile')}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                    >
+                      <UserCircle size={16} />
+                      <span>Your Profile</span>
+                    </button>
+                    <button
+                      onClick={() => navigate('/orders')}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                    >
+                      <Package size={16} />
+                      <span>Order History</span>
+                    </button>
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={() => navigate('/admin')}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors flex items-center space-x-2"
+                      >
+                        <User size={16} />
+                        <span>Admin Dashboard</span>
+                      </button>
+                    )}
+                    <div className="border-t border-gray-200 mt-2 pt-2">
+                      <button
+                        onClick={() => logout()}
+                        className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors flex items-center space-x-2 text-red-600"
+                      >
+                        <LogOut size={16} />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-2">
+                    <button
+                      onClick={() => navigate('/auth')}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors"
+                    >
+                      Sign In
+                    </button>
+                    <button
+                      onClick={() => navigate('/auth')}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors"
+                    >
+                      Create Account
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+            
             <button 
               onClick={() => navigate('/cart')}
               className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors relative"
@@ -143,14 +213,43 @@ const Header = () => {
         <nav className="border-t border-gray-200 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-8">
-              <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                <Menu size={18} />
-                <span 
-                  onClick={() => navigate('/products')}
-                >
-                  All Categories
-                </span>
-              </button>
+              {/* Categories Dropdown */}
+              <div className="relative group">
+                <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                  <Menu size={18} />
+                  <span>All Categories</span>
+                  <ChevronDown size={16} />
+                </button>
+                
+                {/* Categories Dropdown Menu */}
+                <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <div className="py-2">
+                    <button
+                      onClick={() => {
+                        navigate('/products');
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors font-medium text-blue-600"
+                    >
+                      View All Products
+                    </button>
+                    <div className="border-t border-gray-200 mt-2 pt-2">
+                      {categories.map((category) => (
+                        <button
+                          key={category}
+                          onClick={() => {
+                            navigate('/products');
+                            // You can add category filtering logic here
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors"
+                        >
+                          {category}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
               <button 
                 onClick={() => navigate('/products')}
                 className="text-gray-700 hover:text-blue-600 transition-colors font-medium"
