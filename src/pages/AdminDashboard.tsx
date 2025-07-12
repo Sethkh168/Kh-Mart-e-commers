@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Package, Users, ShoppingCart, DollarSign, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Package, Users, ShoppingCart, DollarSign, Search, Clock, Percent } from 'lucide-react';
 import { useStore } from '../store/useStore';
-import { Product } from '../types';
+import { Product, Promotion } from '../types';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
-  const { products, addProduct, updateProduct, deleteProduct, orders, categories } = useStore();
+  const { products, addProduct, updateProduct, deleteProduct, orders, categories, promotions, addPromotion, updatePromotion, deletePromotion } = useStore();
   const [activeTab, setActiveTab] = useState('products');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
   const [showProductForm, setShowProductForm] = useState(false);
+  const [showPromotionForm, setShowPromotionForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { register, handleSubmit, reset, setValue } = useForm();
+  const { register, handleSubmit, reset, setValue, register: registerPromo, handleSubmit: handleSubmitPromo, reset: resetPromo, setValue: setValuePromo } = useForm();
 
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -67,6 +69,48 @@ const AdminDashboard = () => {
     if (window.confirm(`Are you sure you want to delete "${name}"?`)) {
       deleteProduct(id);
       toast.success('Product deleted successfully!');
+    }
+  };
+
+  const onSubmitPromotion = (data: any) => {
+    const promotionData = {
+      ...data,
+      discount: parseFloat(data.discount),
+      startDate: new Date(data.startDate),
+      endDate: new Date(data.endDate),
+      isActive: data.isActive === 'true',
+    };
+
+    if (editingPromotion) {
+      updatePromotion(editingPromotion.id, promotionData);
+      toast.success('Promotion updated successfully!');
+    } else {
+      addPromotion(promotionData as Promotion);
+      toast.success('Promotion added successfully!');
+    }
+
+    resetPromo();
+    setEditingPromotion(null);
+    setShowPromotionForm(false);
+  };
+
+  const handleEditPromotion = (promotion: Promotion) => {
+    setEditingPromotion(promotion);
+    setShowPromotionForm(true);
+    
+    Object.entries(promotion).forEach(([key, value]) => {
+      if (key === 'startDate' || key === 'endDate') {
+        setValuePromo(key, new Date(value).toISOString().split('T')[0]);
+      } else {
+        setValuePromo(key, value);
+      }
+    });
+  };
+
+  const handleDeletePromotion = (id: string, title: string) => {
+    if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
+      deletePromotion(id);
+      toast.success('Promotion deleted successfully!');
     }
   };
 
@@ -240,6 +284,126 @@ const AdminDashboard = () => {
     </div>
   );
 
+  const renderPromotionForm = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            {editingPromotion ? 'Edit Promotion' : 'Add New Promotion'}
+          </h2>
+          
+          <form onSubmit={handleSubmitPromo(onSubmitPromotion)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Promotion Title
+                </label>
+                <input
+                  type="text"
+                  {...registerPromo('title', { required: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description
+                </label>
+                <textarea
+                  {...registerPromo('description', { required: true })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Discount (%)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  {...registerPromo('discount', { required: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Type
+                </label>
+                <select
+                  {...registerPromo('type', { required: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="percentage">Percentage</option>
+                  <option value="fixed">Fixed Amount</option>
+                  <option value="bogo">Buy One Get One</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  {...registerPromo('startDate', { required: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  {...registerPromo('endDate', { required: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Status
+                </label>
+                <select
+                  {...registerPromo('isActive', { required: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="true">Active</option>
+                  <option value="false">Inactive</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-4 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPromotionForm(false);
+                  setEditingPromotion(null);
+                  resetPromo();
+                }}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                {editingPromotion ? 'Update Promotion' : 'Add Promotion'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -288,12 +452,12 @@ const AdminDashboard = () => {
 
           <div className="bg-white rounded-lg shadow-sm p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="w-6 h-6 text-purple-600" />
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Percent className="w-6 h-6 text-orange-600" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Categories</p>
-                <p className="text-2xl font-bold text-gray-900">{categories.length}</p>
+                <p className="text-sm font-medium text-gray-600">Active Promotions</p>
+                <p className="text-2xl font-bold text-gray-900">{promotions.filter(p => p.isActive).length}</p>
               </div>
             </div>
           </div>
@@ -322,6 +486,16 @@ const AdminDashboard = () => {
                 }`}
               >
                 Orders
+              </button>
+              <button
+                onClick={() => setActiveTab('promotions')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'promotions'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Promotions
               </button>
             </nav>
           </div>
@@ -492,11 +666,97 @@ const AdminDashboard = () => {
                 </div>
               </div>
             )}
+
+            {activeTab === 'promotions' && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900">Promotions Management</h2>
+                  <button
+                    onClick={() => setShowPromotionForm(true)}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                  >
+                    <Plus size={20} />
+                    <span>Add Promotion</span>
+                  </button>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Promotion
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Discount
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Duration
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Status
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {promotions.map((promotion) => (
+                        <tr key={promotion.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{promotion.title}</div>
+                              <div className="text-sm text-gray-500">{promotion.description}</div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {promotion.discount}% OFF
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div className="flex items-center space-x-1">
+                              <Clock size={14} />
+                              <span>{new Date(promotion.startDate).toLocaleDateString()} - {new Date(promotion.endDate).toLocaleDateString()}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              promotion.isActive
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {promotion.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleEditPromotion(promotion)}
+                                className="text-blue-600 hover:text-blue-900"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeletePromotion(promotion.id, promotion.title)}
+                                className="text-red-600 hover:text-red-900"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {showProductForm && renderProductForm()}
+      {showPromotionForm && renderPromotionForm()}
     </div>
   );
 };

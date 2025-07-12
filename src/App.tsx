@@ -16,6 +16,7 @@ import Stores from './pages/Stores';
 import Contact from './pages/Contact';
 import DeliveryReturn from './pages/DeliveryReturn';
 import Outlet from './pages/Outlet';
+import Wishlist from './pages/Wishlist';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode; adminOnly?: boolean }> = ({ 
@@ -51,6 +52,7 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/delivery-return" element={<DeliveryReturn />} />
             <Route path="/outlet" element={<Outlet />} />
+            <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/auth" element={<Auth />} />
             <Route 
               path="/checkout" 
